@@ -78,7 +78,12 @@ module Seinfeld
 
     def update_progress
       transaction do
-        days = committed_days_in_feed || []
+        debug_data = {}
+        old_current_streak = current_streak
+        old_longest_streak = longest_streak
+        old_inspect        = inspect
+
+        days = committed_days_in_feed(1, debug_data) || []
         save
 
         unless days.empty?
@@ -111,11 +116,21 @@ module Seinfeld
           self.longest_streak_end   = highest_streak.ended
         end
 
+        path = File.expand_path(File.join(File.dirname(__FILE__), '..', '..', 'debug', "#{login}/#{Time.now.utc.strftime("%Y-%m-%d-%H-%M-%S")}--L#{self.longest_streak.to_i - old_longest_streak.to_i}-C#{self.current_streak.to_i - old_current_streak.to_i}"))
+        FileUtils.mkdir_p path
+        File.open("#{path}/user.txt", "w") do |f| 
+          f.write "BEFORE: #{old_inspect}\n\n"
+          f.write "AFTER:  #{inspect}"
+        end
+        debug_data.each do |page, feed|
+          File.open("#{path}/feed-#{page.to_i}.yml", "w") { |f| f.write feed.to_yaml }
+        end
+
         save
       end
     end
 
-    def committed_days_in_feed(page = 1)
+    def committed_days_in_feed(page = 1, debug_data = nil)
       Time.zone     = time_zone || "UTC"
       feed          = get_feed(page)
       return nil if feed.nil?
@@ -138,10 +153,13 @@ module Seinfeld
           selected
         end
       end.keys
+
+      debug_data[page] = feed if debug_data
+
       if page == 1
         self.last_entry_id = entry_id 
         unless skipped_early
-          while paged_days = committed_days_in_feed(page += 1)
+          while paged_days = committed_days_in_feed(page += 1, debug_data)
             days += paged_days
           end
           days.uniq!
