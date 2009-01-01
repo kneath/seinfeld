@@ -116,14 +116,16 @@ module Seinfeld
           self.longest_streak_end   = highest_streak.ended
         end
 
-        path = File.expand_path(File.join(File.dirname(__FILE__), '..', '..', 'debug', "#{login}/#{Time.now.utc.strftime("%Y-%m-%d-%H-%M-%S")}--L#{self.longest_streak.to_i - old_longest_streak.to_i}-C#{self.current_streak.to_i - old_current_streak.to_i}"))
-        FileUtils.mkdir_p path
-        File.open("#{path}/user.txt", "w") do |f| 
-          f.write "BEFORE: #{old_inspect}\n\n"
-          f.write "AFTER:  #{inspect}"
-        end
-        debug_data.each do |page, feed|
-          File.open("#{path}/feed-#{page.to_i}.yml", "w") { |f| f.write feed.to_yaml }
+        unless days.empty?
+          path = File.expand_path(File.join(File.dirname(__FILE__), '..', '..', 'debug', "#{login}/#{Time.now.utc.strftime("%Y-%m-%d-%H-%M-%S")}--L#{self.longest_streak.to_i - old_longest_streak.to_i}-C#{self.current_streak.to_i - old_current_streak.to_i}"))
+          FileUtils.mkdir_p path
+          File.open("#{path}/user.txt", "w") do |f| 
+            f.write "BEFORE: #{old_inspect}\n\n"
+            f.write "AFTER:  #{inspect}"
+          end
+          debug_data.each do |page, feed|
+            File.open("#{path}/feed-#{page.to_i}.yml", "w") { |f| f.write feed.to_yaml }
+          end
         end
 
         save
