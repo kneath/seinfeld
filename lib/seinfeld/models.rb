@@ -147,7 +147,7 @@ module Seinfeld
           break selected
         end
 
-        if entry.title.downcase =~ %r{^#{login.downcase} (pushed|committed)}
+        if entry.title.downcase =~ %r{^#{login.downcase} (pushed|committed|applied fork commits|created branch)}
           updated = entry.updated_at.in_time_zone
           date    = Date.civil(updated.year, updated.month, updated.day)
           selected.update date => nil
